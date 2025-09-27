@@ -18,7 +18,9 @@ const geoResolver = new GeolocationResolver();
 const corsOptions = {
   origin: [
     'https://arbadacarbaYK.github.io',
+    'https://arbadacarbayk.github.io',
     'https://arbadacarbaYK.github.io/sociostr',
+    'https://arbadacarbayk.github.io/sociostr',
     'http://localhost:3000',
     'http://localhost:3001'
   ],
