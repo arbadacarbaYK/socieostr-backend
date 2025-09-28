@@ -32,10 +32,11 @@ app.use(express.json({ limit: '10mb' }));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    message: 'Sociostr backend is running',
-    timestamp: new Date().toISOString()
+  res.json({
+    status: 'ok',
+    message: 'Sociostr backend is running - FORCED DEPLOY',
+    timestamp: new Date().toISOString(),
+    version: '1.1.0'
   });
 });
 
