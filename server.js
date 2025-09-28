@@ -34,9 +34,10 @@ app.use(express.json({ limit: '10mb' }));
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
-    message: 'Sociostr backend is running - FORCED DEPLOY',
+    message: 'Sociostr backend is running - FORCED DEPLOY v2',
     timestamp: new Date().toISOString(),
-    version: '1.1.0'
+    version: '1.2.0',
+    deployTime: Date.now()
   });
 });
 
