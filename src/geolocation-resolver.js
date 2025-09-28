@@ -79,14 +79,14 @@ class GeolocationResolver {
       }
     }
     
-    // Fallback: Use a random land-based location
-    const fallbackIndex = Math.floor(Math.random() * this.fallbackLocations.length);
-    const fallback = this.fallbackLocations[fallbackIndex];
-    
+    // No location found - return null instead of fallback
     return {
-      ...fallback,
-      confidence: 0.1,
-      method: 'fallback'
+      latitude: null,
+      longitude: null,
+      country: null,
+      city: null,
+      confidence: 0,
+      method: 'none'
     };
   }
 

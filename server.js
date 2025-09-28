@@ -82,49 +82,32 @@ app.post('/api/process-users', async (req, res) => {
         try {
           const location = await geoResolver.resolveUserLocation(user);
           
-          // Add fallback location if no location was resolved
-          if (!location.latitude || !location.longitude) {
-            const fallbackIndex = Math.floor(Math.random() * geoResolver.fallbackLocations.length);
-            const fallback = geoResolver.fallbackLocations[fallbackIndex];
-            location.latitude = fallback.lat;
-            location.longitude = fallback.lng;
-            location.country = fallback.country;
-            location.city = fallback.city;
-            location.confidence = 0.1;
-            location.method = 'fallback';
+          // Only include fallback location if user has some location data but needs refinement
+          // If no location was found at all, keep the null values
+          if (location.method === 'none') {
+            // User has no location data - return as is
+            return {
+              ...user,
+              location
+            };
           }
           
           return {
             ...user,
-            location,
-            fallbackLocation: {
-              lat: location.latitude,
-              lng: location.longitude,
-              country: location.country,
-              city: location.city
-            }
+            location
           };
         } catch (error) {
           console.error(`Error processing user ${user.pubkey}:`, error);
-          // Return user with fallback location
-          const fallbackIndex = Math.floor(Math.random() * geoResolver.fallbackLocations.length);
-          const fallback = geoResolver.fallbackLocations[fallbackIndex];
-          
+          // Return user with no location data on error
           return {
             ...user,
             location: {
-              latitude: fallback.lat,
-              longitude: fallback.lng,
-              country: fallback.country,
-              city: fallback.city,
-              confidence: 0.1,
-              method: 'fallback'
-            },
-            fallbackLocation: {
-              lat: fallback.lat,
-              lng: fallback.lng,
-              country: fallback.country,
-              city: fallback.city
+              latitude: null,
+              longitude: null,
+              country: null,
+              city: null,
+              confidence: 0,
+              method: 'none'
             }
           };
         }
@@ -133,7 +116,11 @@ app.post('/api/process-users', async (req, res) => {
       const batchResults = await Promise.allSettled(batchPromises);
       batchResults.forEach(result => {
         if (result.status === 'fulfilled') {
-          processedUsers.push(result.value);
+          const user = result.value;
+          // Only include users that have a real location (not 'none')
+          if (user.location && user.location.method !== 'none') {
+            processedUsers.push(user);
+          }
         }
       });
     }
