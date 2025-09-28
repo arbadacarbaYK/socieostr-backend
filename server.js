@@ -117,8 +117,13 @@ app.post('/api/process-users', async (req, res) => {
       batchResults.forEach(result => {
         if (result.status === 'fulfilled') {
           const user = result.value;
-          // Only include users that have a real location (not 'none')
-          if (user.location && user.location.method !== 'none') {
+          // Only include users that have a real location with valid coordinates
+          if (user.location && 
+              user.location.method !== 'none' && 
+              user.location.latitude !== null && 
+              user.location.longitude !== null &&
+              user.location.latitude !== 0 && 
+              user.location.longitude !== 0) {
             processedUsers.push(user);
           }
         }

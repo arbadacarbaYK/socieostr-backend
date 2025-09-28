@@ -109,12 +109,45 @@ class GeolocationResolver {
         const country = match[2]?.trim();
         
         if (location) {
-          return {
-            city: location,
-            country: country || 'Unknown',
-            latitude: null,
-            longitude: null
-          };
+          // Try to find coordinates for this location
+          const coordinates = this.findCoordinatesForLocation(location, country);
+          if (coordinates) {
+            return {
+              city: location,
+              country: country || 'Unknown',
+              latitude: coordinates.lat,
+              longitude: coordinates.lng
+            };
+          }
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  findCoordinatesForLocation(city, country) {
+    if (!city) return null;
+    
+    // Normalize the input for comparison
+    const normalizedCity = city.toLowerCase().trim();
+    const normalizedCountry = country ? country.toLowerCase().trim() : '';
+    
+    // Check fallback locations first
+    for (const location of this.fallbackLocations) {
+      const fallbackCity = location.city.toLowerCase();
+      const fallbackCountry = location.country.toLowerCase();
+      
+      // Exact match
+      if (fallbackCity === normalizedCity) {
+        return { lat: location.lat, lng: location.lng };
+      }
+      
+      // Partial match (city contains or is contained in the fallback city)
+      if (fallbackCity.includes(normalizedCity) || normalizedCity.includes(fallbackCity)) {
+        // If country is specified, it should match too
+        if (!country || fallbackCountry.includes(normalizedCountry) || normalizedCountry.includes(fallbackCountry)) {
+          return { lat: location.lat, lng: location.lng };
         }
       }
     }
