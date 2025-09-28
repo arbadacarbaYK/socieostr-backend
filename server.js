@@ -44,15 +44,58 @@ app.get('/api/health', (req, res) => {
 // Nostr users endpoint
 app.get('/api/nostr-users', async (req, res) => {
   try {
-    const { since } = req.query;
+    const { since, limit } = req.query;
     const sinceTimestamp = since ? parseInt(since) : null;
+    const userLimit = limit ? parseInt(limit) : 2000;
     
     console.log('Fetching Nostr users...');
-    const users = await nostrFetcher.fetchUsers(2000, sinceTimestamp);
+    const users = await nostrFetcher.fetchUsers(userLimit, sinceTimestamp);
+    
+    console.log(`Processing ${users.length} users for geolocation...`);
+    
+    const processedUsers = [];
+    const batchSize = 10; // Process in batches to avoid overwhelming the system
+    
+    for (let i = 0; i < users.length; i += batchSize) {
+      const batch = users.slice(i, i + batchSize);
+      const batchPromises = batch.map(async (user) => {
+        try {
+          const location = await geoResolver.resolveUserLocation(user);
+          
+          // Only include users with real location data
+          if (location && 
+              location.method !== 'none' && 
+              location.latitude !== null && 
+              location.longitude !== null &&
+              location.latitude !== 0 && 
+              location.longitude !== 0) {
+            return {
+              ...user,
+              location
+            };
+          }
+          
+          // Return null for users without location - will be filtered out
+          return null;
+        } catch (error) {
+          console.error(`Error processing user ${user.pubkey}:`, error);
+          return null; // Return null for users with errors - will be filtered out
+        }
+      });
+      
+      const batchResults = await Promise.allSettled(batchPromises);
+      batchResults.forEach(result => {
+        if (result.status === 'fulfilled' && result.value !== null) {
+          processedUsers.push(result.value);
+        }
+      });
+    }
+    
+    console.log(`Filtered to ${processedUsers.length} users with valid locations`);
     
     res.json({
-      users: users,
-      message: `Fetched ${users.length} users from Nostr relays`
+      users: processedUsers,
+      message: `Fetched ${users.length} users from Nostr relays, ${processedUsers.length} with valid locations`
     });
   } catch (error) {
     console.error('Error fetching Nostr users:', error);
