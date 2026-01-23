@@ -15,7 +15,7 @@
     "geoip-lite": "^1.4.7",
     "bech32": "^2.0.0",
     "winston": "^3.11.0",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "dotenv": "^16.3.1"
   },
   "engines": {
